@@ -1,17 +1,28 @@
 package main
 
 import (
-	"kasir-app/routes"
+	"kasir-app/config"
+	"kasir-app/database"
+	"kasir-app/route"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := gin.Default()
-	routes.RegisterRoutes(router)
-
-	err := router.Run(":8081")
+	loadConfig, err := config.LoadConfig(".env")
 	if err != nil {
 		return
-	} // listens on 0.0.0.0:8080 by default
+	}
+	db, err := database.InitDB(loadConfig.DbConnection)
+	if err != nil {
+		return
+	}
+
+	router := gin.Default()
+	route.RegisterRoutes(router, db)
+
+	err = router.Run(":" + loadConfig.Port)
+	if err != nil {
+		return
+	}
 }
