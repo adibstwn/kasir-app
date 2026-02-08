@@ -4,35 +4,43 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"kasir-app/dto"
 	"kasir-app/service"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ProductHandler struct {
-	productService *service.ProductService
+	productService service.IProductService
 }
 
-func NewProductHandler(productService *service.ProductService) *ProductHandler {
+func NewProductHandler(productService service.IProductService) *ProductHandler {
 	return &ProductHandler{productService: productService}
 }
 
 func (p *ProductHandler) GetAllProduct(c *gin.Context) {
-	products := p.productService.GetAllProduct()
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	maxRow, _ := strconv.Atoi(c.DefaultQuery("maxRow", "10"))
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": products,
-	})
+	productName := c.Query("productName")
+
+	products, err := p.productService.GetAllProduct(productName, page, maxRow)
+	if err != nil {
+		c.Error(err)
+	}
+
+	c.JSON(http.StatusOK, products)
 }
 
 func (p *ProductHandler) GetProduct(c *gin.Context) {
 	productID := c.Param("id")
 	product, err := p.productService.GetById(productID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "Product not found",
 			})
@@ -82,9 +90,7 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "updated",
 		})
-
 	}
-
 }
 
 func (p *ProductHandler) DeleteProduct(c *gin.Context) {

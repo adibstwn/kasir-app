@@ -1,7 +1,7 @@
 package route
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 	"kasir-app/handler"
 	"kasir-app/repository"
 	"kasir-app/service"
@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitProductRoute(r *gin.Engine, db *sql.DB) {
-	productRepo := repository.NewProductRepository(db)
+func InitProductRoute(r *gin.Engine, gormDb *gorm.DB) {
+	productRepo := repository.NewProductRepository(gormDb)
 	productService := service.NewProductService(productRepo)
 	productHandler := handler.NewProductHandler(productService)
 
